@@ -43,10 +43,15 @@ void draw() {
 
   //drawDigitalizedImageRectTint(cam, 20, 15, 0, 0, width, height);
 
-   image(cam, 0, 0, width/2, height/2);
-   drawDigitalizedImageEllipse(cam, 40, 60, width/2, 0, width/2, height/2);
-   drawDigitalizedImageEllipseRandom(cam, 40, 30, 0, height/2, width/2, height/2);
-   drawDigitalizedImageRect(cam, 40, 30, width/2, height/2, width/2, height/2);
+  image(cam, 0, 0, width/2, height/2);
+  // drawDigitalizedImageEllipse(cam, 40, 60, width/2, 0, width/2, height/2);
+  // drawDigitalizedImageEllipseRandom(cam, 40, 30, 0, height/2, width/2, height/2);
+  // drawDigitalizedImageRect(cam, 40, 30, width/2, height/2, width/2, height/2);
+
+  drawDigitalizedImageMonotone_simple(cam, 32, 24, width/2, 0, width/2, height/2);
+  //drawDigitalizedImageMonotone_ODMbayer(cam, 32, 24, width/2, 0, width/2, height/2);
+  drawDigitalizedImageMonotone_ODMspiral(cam, 32, 24, 0, height/2, width/2, height/2);
+  drawDigitalizedImageMonotone_ODMdot(cam, 32, 24, width/2, height/2, width/2, height/2);
 
   // The following does the same as the above image() line, but 
   // is faster when just drawing the image without any additional 
@@ -144,5 +149,114 @@ void drawDigitalizedImageEllipseRandom(PImage _img, int _numX, int _numY, float 
     float posY = map(imgY, 0, _img.height, 0, _h);
 
     ellipse(_x + posX, _y + posY, blockSizeX, blockSizeY);
+  }
+}
+
+void drawDigitalizedImageMonotone_simple(PImage _img, int _numX, int _numY, float _x, float _y, float _w, float _h) {
+  int imgW = _img.width;
+  int imgH = _img.height;
+  int imgBlockW = _img.width/_numX;
+  int imgBlockH = _img.height/_numY;
+
+  for (int imgX = 0; imgX < imgW; imgX += imgBlockW) {
+    for (int imgY = 0; imgY < imgH; imgY += imgBlockH) {
+      //int imgLoc = imgX + imgY*imgW;
+      //float imgR = red(_img.pixels[imgLoc]);
+      //float imgG = green(_img.pixels[imgLoc]);
+      //float imgB = blue(_img.pixels[imgLoc]);
+      //float v = imgR * 0.298912 + imgG * 0.586611 + imgB * 0.114478;
+
+      float sumV = 0.0;
+      int cntV = 0;
+      for (int imgBlockX = imgX; imgBlockX < imgX + imgBlockW; imgBlockX++) {
+        for (int imgBlockY = imgY; imgBlockY < imgY + imgBlockH; imgBlockY++) {
+          if (imgBlockX < 0 || imgW <= imgBlockX || imgBlockY < 0 || imgH <= imgBlockY) continue;
+          int imgLoc = imgBlockX + imgBlockY * imgW;
+          float imgR = red(_img.pixels[imgLoc]);
+          float imgG = green(_img.pixels[imgLoc]);
+          float imgB = blue(_img.pixels[imgLoc]);
+          sumV += imgR * 0.298912 + imgG * 0.586611 + imgB * 0.114478;
+          cntV++;
+        }
+      }
+      float v = sumV / (float)cntV;
+
+      float threshold = 128;
+      noStroke();
+      if (v < threshold) {
+        fill(0);
+      } else {
+        fill(255);
+      }
+      float blockSizeX = _w / _numX;
+      float blockSizeY = _h / _numY;
+
+      float posX = map(imgX, 0, imgW, 0, _w);
+      float posY = map(imgY, 0, imgH, 0, _h);
+
+      rect(_x + posX, _y + posY, blockSizeX, blockSizeY);
+    }
+  }
+}
+
+void drawDigitalizedImageMonotone_ODMbayer(PImage _img, int _numX, int _numY, float _x, float _y, float _w, float _h) {
+  int [] matrix = // beyer diza
+  {
+    0, 8, 2, 10, 
+      12, 4, 14, 6, 
+      3, 11, 1, 9, 
+      15, 7, 13, 5
+  };
+  drawDigitalizedImageMonotoneOrderedDitherMehtod(_img, _numX, _numY, _x, _y, _w, _h, matrix);
+}
+void drawDigitalizedImageMonotone_ODMspiral(PImage _img, int _numX, int _numY, float _x, float _y, float _w, float _h) {
+  int [] matrix = // spiral
+  {
+    6, 7, 8, 9, 
+      5, 0, 1, 10, 
+      4, 3, 2, 11, 
+      15, 14, 13, 12
+  };
+  drawDigitalizedImageMonotoneOrderedDitherMehtod(_img, _numX, _numY, _x, _y, _w, _h, matrix);
+}
+void drawDigitalizedImageMonotone_ODMdot(PImage _img, int _numX, int _numY, float _x, float _y, float _w, float _h) {
+  int [] matrix = // dot
+  {
+    11, 4, 6, 9, 
+      12, 0, 2, 14, 
+      7, 8, 10, 5, 
+      3, 15, 13, 1
+  };
+  drawDigitalizedImageMonotoneOrderedDitherMehtod(_img, _numX, _numY, _x, _y, _w, _h, matrix);
+}
+
+void drawDigitalizedImageMonotoneOrderedDitherMehtod(PImage _img, int _numX, int _numY, float _x, float _y, float _w, float _h, int [] _matrix) {
+  for (int imgX = 0; imgX < _img.width; imgX += _img.width/_numX) {
+    for (int imgY = 0; imgY < _img.height; imgY += _img.height/_numY) {
+      int imgLoc = imgX + imgY*_img.width;
+      float imgR = red(_img.pixels[imgLoc]);
+      float imgG = green(_img.pixels[imgLoc]);
+      float imgB = blue(_img.pixels[imgLoc]);
+
+      imgR /= 16;
+      imgG /= 16;
+      imgB /= 16;
+      float threshold = _matrix[(imgX % 4) + (imgY % 4) * 4];
+      float v = imgR * 0.298912 + imgG * 0.586611 + imgB * 0.114478;
+
+      noStroke();
+      if (v < threshold) {
+        fill(0);
+      } else {
+        fill(255);
+      }
+      float blockSizeX = _w / _numX;
+      float blockSizeY = _h / _numY;
+
+      float posX = map(imgX, 0, _img.width, 0, _w);
+      float posY = map(imgY, 0, _img.height, 0, _h);
+
+      rect(_x + posX, _y + posY, blockSizeX, blockSizeY);
+    }
   }
 }
