@@ -48,7 +48,8 @@ void draw() {
   // drawDigitalizedImageEllipseRandom(cam, 40, 30, 0, height/2, width/2, height/2);
   // drawDigitalizedImageRect(cam, 40, 30, width/2, height/2, width/2, height/2);
 
-  drawDigitalizedImageMonotone_simple(cam, 32, 24, width/2, 0, width/2, height/2);
+  //drawDigitalizedImageMonotone_simple(cam, 32, 24, width/2, 0, width/2, height/2);
+  getDigitalizedImageMonotone_simple(cam, 32, 24, width/2, 0, width/2, height/2);
   //drawDigitalizedImageMonotone_ODMbayer(cam, 32, 24, width/2, 0, width/2, height/2);
   drawDigitalizedImageMonotone_ODMspiral(cam, 32, 24, 0, height/2, width/2, height/2);
   drawDigitalizedImageMonotone_ODMdot(cam, 32, 24, width/2, height/2, width/2, height/2);
@@ -197,6 +198,63 @@ void drawDigitalizedImageMonotone_simple(PImage _img, int _numX, int _numY, floa
       rect(_x + posX, _y + posY, blockSizeX, blockSizeY);
     }
   }
+}
+
+boolean[][] getDigitalizedImageMonotone_simple(PImage _img, int _numX, int _numY, float _w, float _h) {
+  int imgW = _img.width;
+  int imgH = _img.height;
+  int imgBlockW = _img.width/_numX;
+  int imgBlockH = _img.height/_numY;
+
+  boolean[][] rtArray = new boolean[(int)_w][(int)_h];
+
+  for (int imgX = 0; imgX < imgW; imgX += imgBlockW) {
+    for (int imgY = 0; imgY < imgH; imgY += imgBlockH) {
+      //int imgLoc = imgX + imgY*imgW;
+      //float imgR = red(_img.pixels[imgLoc]);
+      //float imgG = green(_img.pixels[imgLoc]);
+      //float imgB = blue(_img.pixels[imgLoc]);
+      //float v = imgR * 0.298912 + imgG * 0.586611 + imgB * 0.114478;
+
+      float sumV = 0.0;
+      int cntV = 0;
+      for (int imgBlockX = imgX; imgBlockX < imgX + imgBlockW; imgBlockX++) {
+        for (int imgBlockY = imgY; imgBlockY < imgY + imgBlockH; imgBlockY++) {
+          if (imgBlockX < 0 || imgW <= imgBlockX || imgBlockY < 0 || imgH <= imgBlockY) continue;
+          int imgLoc = imgBlockX + imgBlockY * imgW;
+          float imgR = red(_img.pixels[imgLoc]);
+          float imgG = green(_img.pixels[imgLoc]);
+          float imgB = blue(_img.pixels[imgLoc]);
+          sumV += imgR * 0.298912 + imgG * 0.586611 + imgB * 0.114478;
+          cntV++;
+        }
+      }
+      float v = sumV / (float)cntV;
+
+      float threshold = 128;
+
+      int posX = (int)map(imgX, 0, imgW, 0, _w);
+      int posY = (int)map(imgY, 0, imgH, 0, _h);
+
+      boolean value;
+
+      if (v < threshold) {
+        value = false;
+        //print("0 ");
+      } else {
+        value = true;
+        //print("1 ");
+      }
+      rtArray[posX][posY] = value;
+
+      //float blockSizeX = _w / _numX;
+      //float blockSizeY = _h / _numY;
+      //rect(_x + posX, _y + posY, blockSizeX, blockSizeY);
+    }
+    //println("");
+  }
+
+  return rtArray;
 }
 
 void drawDigitalizedImageMonotone_ODMbayer(PImage _img, int _numX, int _numY, float _x, float _y, float _w, float _h) {
