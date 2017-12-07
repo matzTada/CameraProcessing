@@ -49,7 +49,7 @@ void draw() {
   // drawDigitalizedImageRect(cam, 40, 30, width/2, height/2, width/2, height/2);
 
   //drawDigitalizedImageMonotone_simple(cam, 32, 24, width/2, 0, width/2, height/2);
-  getDigitalizedImageMonotone_simple(cam, 32, 24, width/2, 0, width/2, height/2);
+  getDigitalizedImageMonotone_simple(cam, 32, 24, width/2, height/2);
   //drawDigitalizedImageMonotone_ODMbayer(cam, 32, 24, width/2, 0, width/2, height/2);
   drawDigitalizedImageMonotone_ODMspiral(cam, 32, 24, 0, height/2, width/2, height/2);
   drawDigitalizedImageMonotone_ODMdot(cam, 32, 24, width/2, height/2, width/2, height/2);
